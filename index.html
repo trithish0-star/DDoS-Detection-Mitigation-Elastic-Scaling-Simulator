@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Management System</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Stock Management System</h1>
+      <p class="subtitle">Add, Remove &amp; Manage Your Inventory</p>
+    </header>
+
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <h3>Total Items</h3>
+        <p class="stat-value" id="totalItems">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Total Products</h3>
+        <p class="stat-value" id="totalProducts">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Total Value</h3>
+        <p class="stat-value" id="totalValue">$0.00</p>
+      </div>
+    </div>
+
+    <div class="actions-bar">
+      <button class="btn btn-primary" onclick="openAddModal()">+ Add New Stock</button>
+
+      <div class="search-form">
+        <input type="text" id="searchInput" placeholder="Search items..." oninput="renderTable()">
+        <select id="categoryFilter" onchange="renderTable()">
+          <option value="">All Categories</option>
+        </select>
+        <button class="btn btn-secondary" onclick="renderTable()">Filter</button>
+        <button class="btn btn-outline" onclick="clearFilters()">Clear</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Total Value</th>
+            <th>Date Added</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="stockTableBody"></tbody>
+      </table>
+    </div>
+
+    <footer>
+      <p>Stock Management System &copy; 2026</p>
+    </footer>
+  </div>
+
+  <!-- Add / Edit Modal -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Add New Stock</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <form id="itemForm" onsubmit="saveItem(event)">
+        <input type="hidden" id="editId">
+        <div class="form-group">
+          <label for="itemName">Item Name</label>
+          <input type="text" id="itemName" required placeholder="e.g. Laptop, Mouse...">
+        </div>
+        <div class="form-group">
+          <label for="itemCategory">Category</label>
+          <input type="text" id="itemCategory" required placeholder="e.g. Electronics" list="catList">
+          <datalist id="catList">
+            <option value="Electronics">
+            <option value="Stationery">
+            <option value="Furniture">
+            <option value="Clothing">
+            <option value="Food">
+            <option value="Other">
+          </datalist>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="itemQty">Quantity</label>
+            <input type="number" id="itemQty" required min="1" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label for="itemPrice">Price ($)</label>
+            <input type="number" id="itemPrice" required min="0" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Add Stock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Remove Quantity Modal -->
+  <div class="modal-overlay" id="removeModal">
+    <div class="modal modal-small">
+      <div class="modal-header">
+        <h2>Remove Stock</h2>
+        <button class="modal-close" onclick="closeRemoveModal()">&times;</button>
+      </div>
+      <p id="removeItemName" class="modal-info"></p>
+      <p id="removeItemQty" class="modal-info"></p>
+      <form onsubmit="confirmRemove(event)">
+        <input type="hidden" id="removeId">
+        <div class="form-group">
+          <label for="removeQty">Quantity to Remove</label>
+          <input type="number" id="removeQty" required min="1" value="1">
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeRemoveModal()">Cancel</button>
+          <button type="submit" class="btn btn-remove">Remove</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let stock = JSON.parse(localStorage.getItem("stock")) || [
+      { id: genId(), name: "Laptop", category: "Electronics", quantity: 50, price: 999.99, dateAdded: today() },
+      { id: genId(), name: "Mouse", category: "Electronics", quantity: 200, price: 25.99, dateAdded: today() },
+      { id: genId(), name: "Notebook", category: "Stationery", quantity: 500, price: 3.99, dateAdded: today() },
+    ];
+
+    function genId() { return "_" + Math.random().toString(36).slice(2, 11); }
+    function today() { return new Date().toISOString().slice(0, 10); }
+    function save() { localStorage.setItem("stock", JSON.stringify(stock)); }
+
+    function renderTable() {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const cat = document.getElementById("categoryFilter").value;
+
+      let filtered = stock.filter(i =>
+        i.name.toLowerCase().includes(search) && (!cat || i.category === cat)
+      );
+
+      const tbody = document.getElementById("stockTableBody");
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No stock items found. <button class="btn btn-small btn-primary" onclick="openAddModal()">Add your first item!</button></td></tr>';
+      } else {
+        tbody.innerHTML = filtered.map(i => `
+          <tr>
+            <td><strong>${i.name}</strong></td>
+            <td><span class="badge">${i.category}</span></td>
+            <td class="${i.quantity < 10 ? 'low-stock' : ''}">${i.quantity}</td>
+            <td>$${i.price.toFixed(2)}</td>
+            <td>$${(i.quantity * i.price).toFixed(2)}</td>
+            <td>${i.dateAdded}</td>
+            <td class="actions-cell">
+              <button class="btn btn-small btn-edit" onclick="openEditModal('${i.id}')">Edit</button>
+              <button class="btn btn-small btn-remove" onclick="openRemoveModal('${i.id}')">Remove</button>
+              <button class="btn btn-small btn-danger" onclick="deleteItem('${i.id}')">Delete</button>
+            </td>
+          </tr>
+        `).join("");
+      }
+
+      updateCategories();
+      updateStats();
+      save();
+    }
+
+    function updateCategories() {
+      const cats = [...new Set(stock.map(i => i.category))];
+      const sel = document.getElementById("categoryFilter");
+      const current = sel.value;
+      sel.innerHTML = '<option value="">All Categories</option>' +
+        cats.map(c => `<option value="${c}" ${c === current ? 'selected' : ''}>${c}</option>`).join("");
+    }
+
+    function updateStats() {
+      document.getElementById("totalItems").textContent = stock.reduce((s, i) => s + i.quantity, 0);
+      document.getElementById("totalProducts").textContent = stock.length;
+      document.getElementById("totalValue").textContent = "$" + stock.reduce((s, i) => s + i.quantity * i.price, 0).toFixed(2);
+    }
+
+    function clearFilters() {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("categoryFilter").value = "";
+      renderTable();
+    }
+
+    // Add
+    function openAddModal() {
+      document.getElementById("modalTitle").textContent = "Add New Stock";
+      document.getElementById("modalSubmitBtn").textContent = "Add Stock";
+      document.getElementById("editId").value = "";
+      document.getElementById("itemForm").reset();
+      document.getElementById("itemModal").classList.add("active");
+    }
+
+    // Edit
+    function openEditModal(id) {
+      const item = stock.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById("modalTitle").textContent = "Edit Stock Item";
+      document.getElementById("modalSubmitBtn").textContent = "Update Stock";
+      document.getElementById("editId").value = id;
+      document.getElementById("itemName").value = item.name;
+      document.getElementById("itemCategory").value = item.category;
+      document.getElementById("itemQty").value = item.quantity;
+      document.getElementById("itemPrice").value = item.price;
+      document.getElementById("itemModal").classList.add("active");
+    }
+
+    function closeModal() { document.getElementById("itemModal").classList.remove("active"); }
+
+    function saveItem(e) {
+      e.preventDefault();
+      const id = document.getElementById("editId").value;
+      const name = document.getElementById("itemName").value.trim();
+      const category = document.getElementById("itemCategory").value.trim();
+      const quantity = parseInt(document.getElementById("itemQty").value);
+      const price = parseFloat(document.getElementById("itemPrice").value);
+
+      if (id) {
+        const item = stock.find(i => i.id === id);
+        if (item) { item.name = name; item.category = category; item.quantity = quantity; item.price = price; }
+      } else {
+        stock.push({ id: genId(), name, category, quantity, price, dateAdded: today() });
+      }
+      closeModal();
+      renderTable();
+    }
+
+    // Remove
+    function openRemoveModal(id) {
+      const item = stock.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById("removeId").value = id;
+      document.getElementById("removeItemName").textContent = "Item: " + item.name;
+      document.getElementById("removeItemQty").textContent = "In Stock: " + item.quantity;
+      document.getElementById("removeQty").value = 1;
+      document.getElementById("removeQty").max = item.quantity;
+      document.getElementById("removeModal").classList.add("active");
+    }
+
+    function closeRemoveModal() { document.getElementById("removeModal").classList.remove("active"); }
+
+    function confirmRemove(e) {
+      e.preventDefault();
+      const id = document.getElementById("removeId").value;
+      const qty = parseInt(document.getElementById("removeQty").value);
+      const item = stock.find(i => i.id === id);
+      if (!item) return;
+
+      if (qty >= item.quantity) {
+        stock = stock.filter(i => i.id !== id);
+      } else {
+        item.quantity -= qty;
+      }
+      closeRemoveModal();
+      renderTable();
+    }
+
+    // Delete
+    function deleteItem(id) {
+      if (!confirm("DELETE this item permanently?")) return;
+      stock = stock.filter(i => i.id !== id);
+      renderTable();
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
