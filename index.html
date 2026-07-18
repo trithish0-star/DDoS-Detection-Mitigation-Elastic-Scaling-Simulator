@@ -3,278 +3,352 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stock Management System</title>
+  <title>DDoS Detection, Mitigation &amp; Elastic Scaling Simulator</title>
   <link rel="stylesheet" href="static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Stock Management System</h1>
-      <p class="subtitle">Add, Remove &amp; Manage Your Inventory</p>
-    </header>
-
-    <div class="stats" id="stats">
-      <div class="stat-card">
-        <h3>Total Items</h3>
-        <p class="stat-value" id="totalItems">0</p>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <span class="logo-icon">&#9889;</span>
+        <h2>DDoS Shield</h2>
       </div>
-      <div class="stat-card">
-        <h3>Total Products</h3>
-        <p class="stat-value" id="totalProducts">0</p>
-      </div>
-      <div class="stat-card">
-        <h3>Total Value</h3>
-        <p class="stat-value" id="totalValue">$0.00</p>
-      </div>
-    </div>
-
-    <div class="actions-bar">
-      <button class="btn btn-primary" onclick="openAddModal()">+ Add New Stock</button>
-
-      <div class="search-form">
-        <input type="text" id="searchInput" placeholder="Search items..." oninput="renderTable()">
-        <select id="categoryFilter" onchange="renderTable()">
-          <option value="">All Categories</option>
-        </select>
-        <button class="btn btn-secondary" onclick="renderTable()">Filter</button>
-        <button class="btn btn-outline" onclick="clearFilters()">Clear</button>
-      </div>
-    </div>
-
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Category</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Total Value</th>
-            <th>Date Added</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="stockTableBody"></tbody>
-      </table>
-    </div>
-
-    <footer>
-      <p>Stock Management System &copy; 2026</p>
-    </footer>
-  </div>
-
-  <!-- Add / Edit Modal -->
-  <div class="modal-overlay" id="itemModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h2 id="modalTitle">Add New Stock</h2>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-      </div>
-      <form id="itemForm" onsubmit="saveItem(event)">
-        <input type="hidden" id="editId">
-        <div class="form-group">
-          <label for="itemName">Item Name</label>
-          <input type="text" id="itemName" required placeholder="e.g. Laptop, Mouse...">
+      <nav>
+        <a href="#" class="nav-link active" data-tab="dashboard">Dashboard</a>
+        <a href="#" class="nav-link" data-tab="attacks">Attack Simulator</a>
+        <a href="#" class="nav-link" data-tab="mitigation">Mitigation</a>
+        <a href="#" class="nav-link" data-tab="scaling">Elastic Scaling</a>
+        <a href="#" class="nav-link" data-tab="logs">Event Logs</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="status-indicator" id="systemStatus">
+          <span class="status-dot green"></span> System Online
         </div>
-        <div class="form-group">
-          <label for="itemCategory">Category</label>
-          <input type="text" id="itemCategory" required placeholder="e.g. Electronics" list="catList">
-          <datalist id="catList">
-            <option value="Electronics">
-            <option value="Stationery">
-            <option value="Furniture">
-            <option value="Clothing">
-            <option value="Food">
-            <option value="Other">
-          </datalist>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="itemQty">Quantity</label>
-            <input type="number" id="itemQty" required min="1" placeholder="0">
-          </div>
-          <div class="form-group">
-            <label for="itemPrice">Price ($)</label>
-            <input type="number" id="itemPrice" required min="0" step="0.01" placeholder="0.00">
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+
+      <!-- DASHBOARD TAB -->
+      <section class="tab-content active" id="tab-dashboard">
+        <div class="page-header">
+          <h1>Traffic Dashboard</h1>
+          <div class="header-actions">
+            <button class="btn btn-danger" onclick="switchTab('attacks')">&#9888; Launch Attack</button>
           </div>
         </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="modalSubmitBtn">Add Stock</button>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-icon blue">&#128200;</div>
+            <div class="kpi-info">
+              <span class="kpi-label">Requests/sec</span>
+              <span class="kpi-value" id="kpiRps">0</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon green">&#9989;</div>
+            <div class="kpi-info">
+              <span class="kpi-label">Legitimate Traffic</span>
+              <span class="kpi-value" id="kpiLegit">0</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon red">&#128680;</div>
+            <div class="kpi-info">
+              <span class="kpi-label">Malicious Traffic</span>
+              <span class="kpi-value" id="kpiMalicious">0</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon orange">&#128736;</div>
+            <div class="kpi-info">
+              <span class="kpi-label">Active Servers</span>
+              <span class="kpi-value" id="kpiServers">3</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon purple">&#128274;</div>
+            <div class="kpi-info">
+              <span class="kpi-label">Blocked IPs</span>
+              <span class="kpi-value" id="kpiBlocked">0</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon teal">&#9201;</div>
+            <div class="kpi-info">
+              <span class="kpi-label">Uptime</span>
+              <span class="kpi-value" id="kpiUptime">00:00:00</span>
+            </div>
+          </div>
         </div>
-      </form>
-    </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+          <div class="chart-card wide">
+            <h3>Network Traffic (Real-time)</h3>
+            <canvas id="trafficChart"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Traffic Distribution</h3>
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Server Status -->
+        <div class="section-header">
+          <h3>Server Fleet</h3>
+          <span class="badge" id="fleetStatus">All Healthy</span>
+        </div>
+        <div class="server-grid" id="serverGrid"></div>
+      </section>
+
+      <!-- ATTACK SIMULATOR TAB -->
+      <section class="tab-content" id="tab-attacks">
+        <div class="page-header">
+          <h1>DDoS Attack Simulator</h1>
+        </div>
+
+        <div class="attack-grid">
+          <!-- Attack Config -->
+          <div class="attack-config-card">
+            <h3>Configure Attack</h3>
+            <div class="form-group">
+              <label>Attack Type</label>
+              <select id="attackType">
+                <option value="syn_flood">SYN Flood</option>
+                <option value="udp_flood">UDP Flood</option>
+                <option value="http_flood">HTTP Flood</option>
+                <option value="icmp_flood">ICMP Flood</option>
+                <option value="slowloris">Slowloris</option>
+                <option value="dns_amplification">DNS Amplification</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Intensity (requests/sec)</label>
+              <input type="range" id="attackIntensity" min="100" max="50000" value="5000" oninput="document.getElementById('intensityVal').textContent = this.value">
+              <span class="range-val" id="intensityVal">5000</span>
+            </div>
+            <div class="form-group">
+              <label>Duration (seconds)</label>
+              <input type="number" id="attackDuration" value="30" min="5" max="300">
+            </div>
+            <div class="form-group">
+              <label>Source IPs (spoofed)</label>
+              <input type="number" id="attackSources" value="100" min="1" max="10000">
+            </div>
+            <div class="form-group">
+              <label>Target Port</label>
+              <select id="attackPort">
+                <option value="80">80 (HTTP)</option>
+                <option value="443">443 (HTTPS)</option>
+                <option value="53">53 (DNS)</option>
+                <option value="22">22 (SSH)</option>
+              </select>
+            </div>
+            <button class="btn btn-danger btn-lg" onclick="launchAttack()" id="launchBtn">&#9889; Launch Attack</button>
+            <button class="btn btn-secondary btn-lg" onclick="stopAttack()" id="stopBtn" disabled>&#9724; Stop Attack</button>
+          </div>
+
+          <!-- Attack Visualization -->
+          <div class="attack-viz-card">
+            <h3>Attack Visualization</h3>
+            <div class="attack-status" id="attackStatusCard">
+              <div class="attack-status-text">No active attack</div>
+              <div class="attack-progress" id="attackProgress" style="display:none">
+                <div class="progress-bar"><div class="progress-fill" id="attackProgressFill"></div></div>
+                <span id="attackTimeLeft">0s remaining</span>
+              </div>
+            </div>
+            <canvas id="attackChart"></canvas>
+            <div class="attack-stats">
+              <div class="attack-stat">
+                <span class="label">Total Packets</span>
+                <span class="value" id="atkPackets">0</span>
+              </div>
+              <div class="attack-stat">
+                <span class="label">Bandwidth</span>
+                <span class="value" id="atkBandwidth">0 Mbps</span>
+              </div>
+              <div class="attack-stat">
+                <span class="label">Peak RPS</span>
+                <span class="value" id="atkPeak">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MITIGATION TAB -->
+      <section class="tab-content" id="tab-mitigation">
+        <div class="page-header">
+          <h1>Mitigation Controls</h1>
+        </div>
+
+        <div class="mitigation-grid">
+          <!-- Firewall Rules -->
+          <div class="mitigation-card">
+            <h3>&#128737; IP Firewall</h3>
+            <p>Block suspicious IP addresses</p>
+            <div class="form-group">
+              <input type="text" id="blockIpInput" placeholder="Enter IP to block (e.g. 192.168.1.100)">
+            </div>
+            <button class="btn btn-danger" onclick="blockIp()">Block IP</button>
+            <div class="blocked-list" id="blockedList"></div>
+          </div>
+
+          <!-- Rate Limiting -->
+          <div class="mitigation-card">
+            <h3>&#9889; Rate Limiting</h3>
+            <p>Limit requests per IP per minute</p>
+            <div class="form-group">
+              <label>Max Requests / min / IP</label>
+              <input type="number" id="rateLimit" value="100" min="1">
+            </div>
+            <div class="toggle-row">
+              <span>Rate Limiting</span>
+              <label class="toggle">
+                <input type="checkbox" id="rateLimitToggle" onchange="toggleRateLimit()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="stat-mini">
+              <span>Requests Dropped</span>
+              <strong id="droppedCount">0</strong>
+            </div>
+          </div>
+
+          <!-- Geo Blocking -->
+          <div class="mitigation-card">
+            <h3>&#127758; Geo Blocking</h3>
+            <p>Block traffic by region</p>
+            <div class="geo-list" id="geoList">
+              <div class="toggle-row">
+                <span>Asia</span>
+                <label class="toggle"><input type="checkbox" onchange="toggleGeo('asia', this.checked)"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <span>Europe</span>
+                <label class="toggle"><input type="checkbox" onchange="toggleGeo('europe', this.checked)"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <span>North America</span>
+                <label class="toggle"><input type="checkbox" onchange="toggleGeo('namerica', this.checked)"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <span>South America</span>
+                <label class="toggle"><input type="checkbox" onchange="toggleGeo('samerica', this.checked)"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <span>Africa</span>
+                <label class="toggle"><input type="checkbox" onchange="toggleGeo('africa', this.checked)"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Auto Mitigation -->
+          <div class="mitigation-card">
+            <h3>&#129302; Auto Mitigation</h3>
+            <p>Automatically detect and block attacks</p>
+            <div class="toggle-row">
+              <span>Auto-detect DDoS</span>
+              <label class="toggle">
+                <input type="checkbox" id="autoDetectToggle" checked onchange="toggleAutoDetect()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <span>Auto-block attackers</span>
+              <label class="toggle">
+                <input type="checkbox" id="autoBlockToggle" checked onchange="toggleAutoBlock()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <span>Auto-scale servers</span>
+              <label class="toggle">
+                <input type="checkbox" id="autoScaleToggle" checked onchange="toggleAutoScale()">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="stat-mini">
+              <span>Auto-blocked IPs</span>
+              <strong id="autoBlockedCount">0</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ELASTIC SCALING TAB -->
+      <section class="tab-content" id="tab-scaling">
+        <div class="page-header">
+          <h1>Elastic Scaling Simulator</h1>
+        </div>
+
+        <div class="scaling-config">
+          <div class="scaling-card">
+            <h3>Scaling Rules</h3>
+            <div class="form-group">
+              <label>Scale UP when CPU &gt; (%)</label>
+              <input type="number" id="scaleUpThreshold" value="70" min="10" max="95">
+            </div>
+            <div class="form-group">
+              <label>Scale DOWN when CPU &lt; (%)</label>
+              <input type="number" id="scaleDownThreshold" value="30" min="5" max="80">
+            </div>
+            <div class="form-group">
+              <label>Min Servers</label>
+              <input type="number" id="minServers" value="2" min="1" max="20">
+            </div>
+            <div class="form-group">
+              <label>Max Servers</label>
+              <input type="number" id="maxServers" value="10" min="1" max="50">
+            </div>
+            <button class="btn btn-primary" onclick="applyScalingRules()">Apply Rules</button>
+          </div>
+
+          <div class="scaling-card wide">
+            <h3>Server Scaling Timeline</h3>
+            <canvas id="scalingChart"></canvas>
+            <div class="scaling-legend">
+              <span><span class="dot blue"></span> Server Count</span>
+              <span><span class="dot red"></span> CPU Load %</span>
+              <span><span class="dot green"></span> Request Rate</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <h3>Server Fleet</h3>
+          <div>
+            <button class="btn btn-small btn-secondary" onclick="manualScaleUp()">+ Add Server</button>
+            <button class="btn btn-small btn-danger" onclick="manualScaleDown()">- Remove Server</button>
+          </div>
+        </div>
+        <div class="server-grid" id="scalingServerGrid"></div>
+      </section>
+
+      <!-- LOGS TAB -->
+      <section class="tab-content" id="tab-logs">
+        <div class="page-header">
+          <h1>Event Logs</h1>
+          <div class="header-actions">
+            <button class="btn btn-outline" onclick="clearLogs()">Clear Logs</button>
+            <button class="btn btn-secondary" onclick="exportLogs()">Export CSV</button>
+          </div>
+        </div>
+        <div class="log-container" id="logContainer">
+          <div class="log-empty">No events yet. Launch an attack or change mitigation settings to see events.</div>
+        </div>
+      </section>
+
+    </main>
   </div>
 
-  <!-- Remove Quantity Modal -->
-  <div class="modal-overlay" id="removeModal">
-    <div class="modal modal-small">
-      <div class="modal-header">
-        <h2>Remove Stock</h2>
-        <button class="modal-close" onclick="closeRemoveModal()">&times;</button>
-      </div>
-      <p id="removeItemName" class="modal-info"></p>
-      <p id="removeItemQty" class="modal-info"></p>
-      <form onsubmit="confirmRemove(event)">
-        <input type="hidden" id="removeId">
-        <div class="form-group">
-          <label for="removeQty">Quantity to Remove</label>
-          <input type="number" id="removeQty" required min="1" value="1">
-        </div>
-        <div class="form-actions">
-          <button type="button" class="btn btn-outline" onclick="closeRemoveModal()">Cancel</button>
-          <button type="submit" class="btn btn-remove">Remove</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    let stock = JSON.parse(localStorage.getItem("stock")) || [
-      { id: genId(), name: "Laptop", category: "Electronics", quantity: 50, price: 999.99, dateAdded: today() },
-      { id: genId(), name: "Mouse", category: "Electronics", quantity: 200, price: 25.99, dateAdded: today() },
-      { id: genId(), name: "Notebook", category: "Stationery", quantity: 500, price: 3.99, dateAdded: today() },
-    ];
-
-    function genId() { return "_" + Math.random().toString(36).slice(2, 11); }
-    function today() { return new Date().toISOString().slice(0, 10); }
-    function save() { localStorage.setItem("stock", JSON.stringify(stock)); }
-
-    function renderTable() {
-      const search = document.getElementById("searchInput").value.toLowerCase();
-      const cat = document.getElementById("categoryFilter").value;
-
-      let filtered = stock.filter(i =>
-        i.name.toLowerCase().includes(search) && (!cat || i.category === cat)
-      );
-
-      const tbody = document.getElementById("stockTableBody");
-      if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No stock items found. <button class="btn btn-small btn-primary" onclick="openAddModal()">Add your first item!</button></td></tr>';
-      } else {
-        tbody.innerHTML = filtered.map(i => `
-          <tr>
-            <td><strong>${i.name}</strong></td>
-            <td><span class="badge">${i.category}</span></td>
-            <td class="${i.quantity < 10 ? 'low-stock' : ''}">${i.quantity}</td>
-            <td>$${i.price.toFixed(2)}</td>
-            <td>$${(i.quantity * i.price).toFixed(2)}</td>
-            <td>${i.dateAdded}</td>
-            <td class="actions-cell">
-              <button class="btn btn-small btn-edit" onclick="openEditModal('${i.id}')">Edit</button>
-              <button class="btn btn-small btn-remove" onclick="openRemoveModal('${i.id}')">Remove</button>
-              <button class="btn btn-small btn-danger" onclick="deleteItem('${i.id}')">Delete</button>
-            </td>
-          </tr>
-        `).join("");
-      }
-
-      updateCategories();
-      updateStats();
-      save();
-    }
-
-    function updateCategories() {
-      const cats = [...new Set(stock.map(i => i.category))];
-      const sel = document.getElementById("categoryFilter");
-      const current = sel.value;
-      sel.innerHTML = '<option value="">All Categories</option>' +
-        cats.map(c => `<option value="${c}" ${c === current ? 'selected' : ''}>${c}</option>`).join("");
-    }
-
-    function updateStats() {
-      document.getElementById("totalItems").textContent = stock.reduce((s, i) => s + i.quantity, 0);
-      document.getElementById("totalProducts").textContent = stock.length;
-      document.getElementById("totalValue").textContent = "$" + stock.reduce((s, i) => s + i.quantity * i.price, 0).toFixed(2);
-    }
-
-    function clearFilters() {
-      document.getElementById("searchInput").value = "";
-      document.getElementById("categoryFilter").value = "";
-      renderTable();
-    }
-
-    // Add
-    function openAddModal() {
-      document.getElementById("modalTitle").textContent = "Add New Stock";
-      document.getElementById("modalSubmitBtn").textContent = "Add Stock";
-      document.getElementById("editId").value = "";
-      document.getElementById("itemForm").reset();
-      document.getElementById("itemModal").classList.add("active");
-    }
-
-    // Edit
-    function openEditModal(id) {
-      const item = stock.find(i => i.id === id);
-      if (!item) return;
-      document.getElementById("modalTitle").textContent = "Edit Stock Item";
-      document.getElementById("modalSubmitBtn").textContent = "Update Stock";
-      document.getElementById("editId").value = id;
-      document.getElementById("itemName").value = item.name;
-      document.getElementById("itemCategory").value = item.category;
-      document.getElementById("itemQty").value = item.quantity;
-      document.getElementById("itemPrice").value = item.price;
-      document.getElementById("itemModal").classList.add("active");
-    }
-
-    function closeModal() { document.getElementById("itemModal").classList.remove("active"); }
-
-    function saveItem(e) {
-      e.preventDefault();
-      const id = document.getElementById("editId").value;
-      const name = document.getElementById("itemName").value.trim();
-      const category = document.getElementById("itemCategory").value.trim();
-      const quantity = parseInt(document.getElementById("itemQty").value);
-      const price = parseFloat(document.getElementById("itemPrice").value);
-
-      if (id) {
-        const item = stock.find(i => i.id === id);
-        if (item) { item.name = name; item.category = category; item.quantity = quantity; item.price = price; }
-      } else {
-        stock.push({ id: genId(), name, category, quantity, price, dateAdded: today() });
-      }
-      closeModal();
-      renderTable();
-    }
-
-    // Remove
-    function openRemoveModal(id) {
-      const item = stock.find(i => i.id === id);
-      if (!item) return;
-      document.getElementById("removeId").value = id;
-      document.getElementById("removeItemName").textContent = "Item: " + item.name;
-      document.getElementById("removeItemQty").textContent = "In Stock: " + item.quantity;
-      document.getElementById("removeQty").value = 1;
-      document.getElementById("removeQty").max = item.quantity;
-      document.getElementById("removeModal").classList.add("active");
-    }
-
-    function closeRemoveModal() { document.getElementById("removeModal").classList.remove("active"); }
-
-    function confirmRemove(e) {
-      e.preventDefault();
-      const id = document.getElementById("removeId").value;
-      const qty = parseInt(document.getElementById("removeQty").value);
-      const item = stock.find(i => i.id === id);
-      if (!item) return;
-
-      if (qty >= item.quantity) {
-        stock = stock.filter(i => i.id !== id);
-      } else {
-        item.quantity -= qty;
-      }
-      closeRemoveModal();
-      renderTable();
-    }
-
-    // Delete
-    function deleteItem(id) {
-      if (!confirm("DELETE this item permanently?")) return;
-      stock = stock.filter(i => i.id !== id);
-      renderTable();
-    }
-
-    renderTable();
-  </script>
+  <script src="static/app.js"></script>
 </body>
 </html>
